@@ -1,10 +1,10 @@
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 
+import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -15,11 +15,13 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Main {
-    private final static int WIDTH = 800;
-    private final static int HEIGHT = 600;
+    private static int WIDTH = 800;
+    private static int HEIGHT = 600;
     private final static String TITLE = "Game";
     private static long window;
-    public static Camera camera = new Camera(new Vector3f(0, 0, 1), new Vector3f(0, 0, 0));
+    public static Camera camera = new Camera(new Vector3f(0, 0, 1), new Vector3f(100, 1, 100));
+
+    static float rot = 0f;
 
     public static void createWindow(){
         GLFWErrorCallback.createPrint(System.err).set();
@@ -51,25 +53,38 @@ public class Main {
     public static void gameLoop(){
         GL.createCapabilities();
 
-        FloatBuffer ambient = BufferUtils.createFloatBuffer(4);
-        ambient.put(new float[] { 0.05f, 0.05f, 0.05f, 1f, });
-        ambient.flip();
+//        glfwSetFramebufferSizeCallback(window, (window, width, height) -> {
+//          WIDTH = width;
+//          HEIGHT = height;
+//          glViewport(0, 0, width, height);
+//
+//          glMatrixMode(GL_PROJECTION);
+//          glLoadIdentity();
+//          glOrtho(0, width, height, 0, 0f, 0f);
+//          glMatrixMode(GL_MODELVIEW);
+//          glLoadIdentity();
+//        });
 
-        FloatBuffer position = BufferUtils.createFloatBuffer(4);
-        position.put(new float[] { 0f, 0f, 0f, 1f, });
-        position.flip();
+        glEnable(GL_DEPTH_TEST); // Enable depth testing
 
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
-        glLightfv(GL_LIGHT0, GL_POSITION, position);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        // Setup perspective projection
+        gluPerspective(45.0f, (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+        glMatrixMode(GL_MODELVIEW);
+
+
+        glfwSetCursorPosCallback(window, (window, x, y) -> {
+           System.out.println("x: " + x + " | y: " + y);
+        });
+
+
 
         while (!glfwWindowShouldClose(window)){
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            camera.update();
+            glClearColor(0.5f, 0.1f, 0.8f, 0.0f);
             render();
 
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
@@ -85,16 +100,59 @@ public class Main {
 
 
     public static void render(){
-        glClearColor(0.5f, 0.0f, 0.8f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
+        // Move the camera back to see the cube
+        glTranslatef(0.0f, 0.0f, -5.0f);
+
+        glRotatef(rot, 1.0f, 1.0f, 1.0f); // Rotate the cube on X, Y & Z
 
         glBegin(GL_QUADS);
-        glNormal3f(0.0f, 1.0f, 0.0f); // Normal pointing upwards
-        glColor3f(1.0f, 1.0f, 1.0f); // Set color to white to see lighting effects
-        glVertex3f(-50, 0, -50);
-        glVertex3f(-50, 0, 50);
-        glVertex3f(50, 0, 50);
-        glVertex3f(50, 0, -50);
+        glColor3f(0.0f, 1.0f, 0.0f); // Set The Color To Green
+        glVertex3f(1.0f, 1.0f, -1.0f); // Top Right Of The Quad (Top)
+        glVertex3f(-1.0f, 1.0f, -1.0f); // Top Left Of The Quad (Top)
+        glVertex3f(-1.0f, 1.0f, 1.0f); // Bottom Left Of The Quad (Top)
+        glVertex3f(1.0f, 1.0f, 1.0f);
+
+        glColor3f(1.0f, 0.5f, 0.0f); // Set The Color To Orange
+        glVertex3f(1.0f, -1.0f, 1.0f); // Top Right Of The Quad (Bottom)
+        glVertex3f(-1.0f, -1.0f, 1.0f); // Top Left Of The Quad (Bottom)
+        glVertex3f(-1.0f, -1.0f, -1.0f); // Bottom Left Of The Quad (Bottom)
+        glVertex3f(1.0f, -1.0f, -1.0f); // Bottom Right Of The Quad (Bottom)
+
+        glColor3f(1.0f, 0.0f, 0.0f); // Set The Color To Red
+        glVertex3f(1.0f, 1.0f, 1.0f); // Top Right Of The Quad (Front)
+        glVertex3f(-1.0f, 1.0f, 1.0f); // Top Left Of The Quad (Front)
+        glVertex3f(-1.0f, -1.0f, 1.0f); // Bottom Left Of The Quad (Front)
+        glVertex3f(1.0f, -1.0f, 1.0f);
+
+        glColor3f(1.0f, 1.0f, 0.0f); // Set The Color To Yellow
+        glVertex3f(1.0f, -1.0f, -1.0f); // Bottom Left Of The Quad (Back)
+        glVertex3f(-1.0f, -1.0f, -1.0f); // Bottom Right Of The Quad (Back)
+        glVertex3f(-1.0f, 1.0f, -1.0f); // Top Right Of The Quad (Back)
+        glVertex3f(1.0f, 1.0f, -1.0f);
+
+        glColor3f(0.0f, 0.0f, 1.0f); // Set The Color To Blue
+        glVertex3f(-1.0f, 1.0f, 1.0f); // Top Right Of The Quad (Left)
+        glVertex3f(-1.0f, 1.0f, -1.0f); // Top Left Of The Quad (Left)
+        glVertex3f(-1.0f, -1.0f, -1.0f); // Bottom Left Of The Quad (Left)
+        glVertex3f(-1.0f, -1.0f, 1.0f);
+
+        glColor3f(1.0f, 0.0f, 1.0f); // Set The Color To Violet
+        glVertex3f(1.0f, 1.0f, -1.0f); // Top Right Of The Quad (Right)
+        glVertex3f(1.0f, 1.0f, 1.0f); // Top Left Of The Quad (Right)
+        glVertex3f(1.0f, -1.0f, 1.0f); // Bottom Left Of The Quad (Right)
+        glVertex3f(1.0f, -1.0f, -1.0f); // Bottom Right Of The Quad (Right)
         glEnd();
+
+        rot += 0.2f;
+    }
+
+
+    public static void gluPerspective(float fovY, float aspect, float zNear, float zFar) {
+        float fH = (float) Math.tan(Math.toRadians(fovY / 2)) * zNear;
+        float fW = fH * aspect;
+        glFrustum(-fW, fW, -fH, fH, zNear, zFar);
     }
 
     public static void main(String[] args) {

@@ -23,6 +23,7 @@ public class Camera {
         new GLFWKeyCallback() {
             public void invoke ( long window, int key, int scancode, int action, int mods){
                 if (action != GLFW.GLFW_RELEASE) {
+                    System.out.println("key:" + key);
                     switch (key) {
                         case GLFW.GLFW_KEY_W -> position.add(new Vector3f(-x, 0, -z));
                         case GLFW.GLFW_KEY_A -> position.add(new Vector3f(-z, 0, x));
@@ -37,6 +38,7 @@ public class Camera {
 
         new GLFWCursorPosCallback() {
             public void invoke(long window, double xpos, double ypos) {
+                System.out.println("x: " + xpos + " y: " + ypos);
                 newMouseX = xpos;
                 newMouseY = ypos;
             }
